@@ -1,7 +1,7 @@
 {
     "uuid": "usd-rub@dmija",
     "name": "USD to RUB",
-    "description": "Показывает курс доллара к рублю",
+    "description": "Displays the USD to RUB exchange rate",
     "version": 1,
     "shell-version": ["3.38"],
     "url": "https://www.cbr-xml-daily.ru/"
