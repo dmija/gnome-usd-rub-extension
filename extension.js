@@ -11,7 +11,7 @@ function fetchExchangeRate(callback) {
 
     session.queue_message(request, (session, response) => {
         if (!response || response.status_code !== 200) {
-            callback("Ошибка");
+            callback("Error");
             return;
         }
 
@@ -20,7 +20,7 @@ function fetchExchangeRate(callback) {
             let rate = data.Valute.USD.Value.toFixed(2);
             callback(rate);
         } catch (e) {
-            callback("Ошибка");
+            callback("Error");
         }
     });
 }
