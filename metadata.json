@@ -1,7 +1,7 @@
 {
     "uuid": "usd-rub@dmija",
     "name": "USD to RUB",
-    "description": "Displays the USD to RUB exchange rate",
+    "description": "Displays the USD to RUB exchange rate in the GNOME Shell panel. Data is sourced from cbr-xml-daily.ru.",
     "version": 1,
     "shell-version": ["3.38"],
     "url": "https://www.cbr-xml-daily.ru/"
