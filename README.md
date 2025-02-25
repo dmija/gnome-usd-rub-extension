@@ -4,7 +4,7 @@ This is a GNOME Shell extension that displays the current exchange rate of USD t
 
 ## Features
 - Displays the USD to RUB exchange rate.
-- Updates every 5 minutes (configurable).
+- Updates every 5 minutes.
 - Can be refreshed manually from the menu.
   
 ## Installation via GNOME Extensions Website
