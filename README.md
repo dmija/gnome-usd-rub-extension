@@ -1,6 +1,6 @@
 # USD to RUB GNOME Shell Extension
 
-This is a GNOME Shell extension that displays the current exchange rate of USD to RUB (Russian Ruble) in the system's top panel.
+This is a GNOME Shell extension that displays the current exchange rate of USD to RUB (Russian Ruble) in the system's top panel. Data is sourced from cbr-xml-daily.ru.
 
 ## Features
 
