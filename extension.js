@@ -1,80 +1,78 @@
-const { St, Clutter, GLib, Gio, Soup, GObject } = imports.gi;
+const { St, GLib, GObject, Soup, Clutter } = imports.gi;
 const Main = imports.ui.main;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 
-let indicator, session;
-
-function fetchExchangeRate(callback) {
-    let url = "https://www.cbr-xml-daily.ru/daily_json.js";
-    let request = new Soup.Message({ method: 'GET', uri: new Soup.URI(url) });
-
-    session.queue_message(request, (session, response) => {
-        if (!response || response.status_code !== 200) {
-            callback("Error");
-            return;
-        }
-
-        try {
-            let data = JSON.parse(response.response_body.data);
-            let rate = data.Valute.USD.Value.toFixed(2);
-            callback(rate);
-        } catch (e) {
-            callback("Error");
-        }
-    });
-}
+let usdRubIndicator;
+const USD_RUB_API_URL = "https://www.cbr-xml-daily.ru/daily_json.js";
+const REFRESH_RATE = 300; 
 
 const USDRUBIndicator = GObject.registerClass(
     class USDRUBIndicator extends PanelMenu.Button {
         _init() {
-            super._init(0.0, "USD to RUB Indicator");
+            super._init(0.0, "USD to RUB Exchange Rate");
 
+            this._httpSession = new Soup.SessionAsync();
+            Soup.Session.prototype.add_feature.call(this._httpSession, new Soup.CookieJar());
+            
             this.label = new St.Label({
-                text: "USD: ... ₽",
+                text: "Loading...",
                 y_align: Clutter.ActorAlign.CENTER
             });
-
             this.add_child(this.label);
 
-            this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+            let menuItem = new PopupMenu.PopupMenuItem("Refresh");
+            menuItem.connect("activate", () => this._fetchExchangeRate());
+            this.menu.addMenuItem(menuItem);
 
-            let refreshItem = new PopupMenu.PopupMenuItem('Обновить курс');
-            refreshItem.connect('activate', () => this.updateRate());
-            this.menu.addMenuItem(refreshItem);
-
-            this.updateRate();
-            this._timeout = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 300, () => {
-                this.updateRate();
-                return GLib.SOURCE_CONTINUE;
+            this._fetchExchangeRate();
+            this._timeout = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, REFRESH_RATE, () => {
+                this._fetchExchangeRate();
+                return true;
             });
         }
 
-        updateRate() {
-            fetchExchangeRate((rate) => {
-                this.label.set_text(`USD: ${rate} ₽`);
+        _fetchExchangeRate() {
+            let request = Soup.Message.new("GET", USD_RUB_API_URL);
+            this._httpSession.queue_message(request, (session, response) => {
+                if (response.status_code !== 200) {
+                    this.label.set_text("Error");
+                    logError(`HTTP Error: ${response.status_code}`);
+                    return;
+                }
+
+                try {
+                    let json = JSON.parse(response.response_body.data);
+                    let usdRate = json.Valute.USD.Value.toFixed(2);
+                    this.label.set_text(`USD: ${usdRate} ₽`);
+                } catch (e) {
+                    this.label.set_text("Error");
+                    logError(e);
+                }
             });
         }
 
         destroy() {
-            if (this._timeout) GLib.source_remove(this._timeout);
+            if (this._timeout) {
+                GLib.Source.remove(this._timeout);
+                this._timeout = null;
+            }
+            if (this._httpSession) {
+                this._httpSession = null;
+            }
             super.destroy();
         }
     }
 );
 
-function init() {
-    session = new Soup.Session();
-}
-
 function enable() {
-    indicator = new USDRUBIndicator();
-    Main.panel.addToStatusArea("usd-rub-indicator", indicator);
+    usdRubIndicator = new USDRUBIndicator();
+    Main.panel.addToStatusArea("usd-rub-indicator", usdRubIndicator);
 }
 
 function disable() {
-    if (indicator) {
-        indicator.destroy();
-        indicator = null;
+    if (usdRubIndicator) {
+        usdRubIndicator.destroy();
+        usdRubIndicator = null;
     }
 }
